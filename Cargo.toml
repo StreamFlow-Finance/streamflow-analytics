@@ -12,3 +12,5 @@ edition = "2018"
 solana-client = "1.9.5"
 tokio = { version = "1", features = ["full"] }
 solana-program = "1.4.17"
+serde = "1.0.127"
+serde_json = "1.0.66"
