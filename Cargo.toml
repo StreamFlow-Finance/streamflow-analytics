@@ -14,3 +14,4 @@ tokio = { version = "1", features = ["full"] }
 solana-program = "1.4.17"
 serde = "1.0.127"
 serde_json = "1.0.66"
+borsh = "0.9.1"
