@@ -116,7 +116,7 @@ pub struct TokenStreamData {
     pub ix: StreamInstruction,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TokenInfo {
     name: String,
     symbol: String,
@@ -124,6 +124,7 @@ pub struct TokenInfo {
     logo: String,
     price: f64,
     amount_sent: u64,
+    amount_of_streams: u64,
 }
 
 #[tokio::main]
@@ -168,8 +169,19 @@ async fn main() {
             active_streams += 1;
         }
         match token_list.get(&mint.to_string()) {
-            Some(_) => {
-                println!("duplicate");
+            Some(dup) => {
+                token_list.insert(
+                    mint.to_string(),
+                    TokenInfo {
+                        amount_sent: dup.amount_sent + account_data_decoded.ix.deposited_amount,
+                        name: dup.name.clone(),
+                        symbol: dup.symbol.clone(),
+                        logo: dup.logo.clone(),
+                        decimals: dup.decimals,
+                        price: dup.price,
+                        amount_of_streams: dup.amount_of_streams + 1,
+                    },
+                );
             }
             _ => {
                 let req_metadata = format!(
@@ -212,7 +224,7 @@ async fn main() {
                     _ => 0.0,
                 };
                 let decimals = token_dec.decimals;
-                let amt = account_data_decoded.ix.deposited_amount
+                let amt = account_data_decoded.ix.deposited_amount;
                 println!("amount {}", amt);
                 let mut token_info = TokenInfo {
                     name: String::from(name),
@@ -221,6 +233,7 @@ async fn main() {
                     decimals: decimals,
                     price: price,
                     amount_sent: amt,
+                    amount_of_streams: 1,
                 };
                 token_list.insert(mint.to_string(), token_info);
             }
