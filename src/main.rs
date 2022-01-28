@@ -125,6 +125,7 @@ pub struct TokenInfo {
     price: f64,
     amount_sent: u64,
     amount_of_streams: u64,
+    value: f64,
 }
 
 #[tokio::main]
@@ -157,6 +158,8 @@ async fn main() {
         .unwrap()
         .as_secs();
     let mut active_streams: u64 = 0;
+    let mut total_value_sent: f64 = 0.0;
+    let mut total_value_locked: f64 = 0.0;
     let all_streams = accounts_strmflw.len();
     for account in accounts_strmflw {
         println!("pub key: {:#?}", account.0);
@@ -165,21 +168,31 @@ async fn main() {
         println!("account {:#?}", &account_data_decoded);
         let mint = &account_data_decoded.mint;
         let mut new_token: JsonValue;
+        let mut is_active: bool = false;
         if (now > account_data_decoded.ix.start_time) & (now < account_data_decoded.ix.end_time) {
             active_streams += 1;
+            is_active = true
         }
         match token_list.get(&mint.to_string()) {
             Some(dup) => {
+                let divisor = u64::pow(10, dup.decimals as u32);
+                let new_amt = dup.amount_sent + account_data_decoded.ix.deposited_amount;
+                let new_value = (new_amt / divisor) as f64 * dup.price;
+                if is_active {
+                    total_value_locked += new_value - dup.value;
+                }
+                total_value_sent += new_value - dup.value;
                 token_list.insert(
                     mint.to_string(),
                     TokenInfo {
-                        amount_sent: dup.amount_sent + account_data_decoded.ix.deposited_amount,
+                        amount_sent: new_amt,
                         name: dup.name.clone(),
                         symbol: dup.symbol.clone(),
                         logo: dup.logo.clone(),
                         decimals: dup.decimals,
                         price: dup.price,
                         amount_of_streams: dup.amount_of_streams + 1,
+                        value: new_value,
                     },
                 );
             }
@@ -226,6 +239,17 @@ async fn main() {
                 let decimals = token_dec.decimals;
                 let amt = account_data_decoded.ix.deposited_amount;
                 println!("amount {}", amt);
+                let divisor = u64::pow(10, decimals as u32);
+                let adjusted_for_decimals = amt / divisor;
+                let value = adjusted_for_decimals as f64 * price;
+                println!(
+                    "divisor {}\nadjusted {}\noriginal {}\nfinal {}",
+                    divisor, adjusted_for_decimals, amt, value
+                );
+                if is_active {
+                    total_value_locked += value;
+                }
+                total_value_sent += value;
                 let mut token_info = TokenInfo {
                     name: String::from(name),
                     symbol: String::from(symbol),
@@ -234,6 +258,7 @@ async fn main() {
                     price: price,
                     amount_sent: amt,
                     amount_of_streams: 1,
+                    value,
                 };
                 token_list.insert(mint.to_string(), token_info);
             }
@@ -241,7 +266,15 @@ async fn main() {
     }
     let all_unique_tokens = token_list.len();
     println!("{:#?}", token_list);
-    // let account_data_encoded = &accounts_strmflw[0];
 
-    // println!("{:#?}", account_data_encoded.mint);
+    // number of different tokens being streamed (vested)
+    println!("unique tokens {:#?}", all_unique_tokens);
+    // total number of streams created (ever)
+    println!("total streams {:#?}", all_streams);
+    // total number of active streams (active)
+    println!("total active streams {:#?}", active_streams);
+    // total value of all vesting contracts ever created (in USD)
+    println!("total value sent {:#?}", total_value_sent);
+    // number of different tokens being streamed (vested)
+    println!("total value locked {:#?}", total_value_locked);
 }
