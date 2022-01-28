@@ -124,17 +124,19 @@ pub struct TokenInfo {
 }
 
 pub async fn fetch() {
-    println!("Hello, world!");
+    println!("Hello, world!1");
     // let url = "https://rpc.ankr.com/solana".to_string();
     // let url = "https://solana-api.projectserum.com".to_string();
     let url = "https://api.mainnet-beta.solana.com".to_string();
     let timeout = Duration::from_secs(60);
+    println!("Hello, world!1.2");
     let client = RpcClient::new_with_timeout(url, timeout);
     // println!("{:#?}", client)
     let owner = Pubkey::from_str("8aqyH9t4hSbyv2J3HB6t2c1AuR9dGpC5Nfk9F3jn7FjQ").unwrap();
     let usdc_token = Pubkey::from_str("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v").unwrap();
     let streamflow_addr = Pubkey::from_str("8e72pYCDaxu3GqMfeQ5r8wFgoZSYk6oua1Qo9XpsZjX").unwrap();
     let rand_token = Pubkey::from_str("D3cm6WRnyBct3p7vFqyTt2CaynsGPuVQT2zW6WHSTX6q").unwrap();
+    println!("Hello, world!2");
     // let account = client.get_account(&owner).unwrap();
     // println!("{:#?}", &account);
     // let balances = client.get_token_account_balance(&usdc_token).unwrap();
@@ -146,6 +148,7 @@ pub async fn fetch() {
     // p["name"] = json!("poop");
     // println!("{:#?}", &p);
     // println!("{:#?}", &balances);
+    println!("Hello, world!3");
     let accounts_strmflw = client.get_program_accounts(&streamflow_addr).unwrap();
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -155,6 +158,7 @@ pub async fn fetch() {
     let mut total_value_sent: f64 = 0.0;
     let mut total_value_locked: f64 = 0.0;
     let all_streams = accounts_strmflw.len();
+    println!("Hello, world!4");
     for account in accounts_strmflw {
         println!("pub key: {:#?}", account.0);
         let account_data_decoded: TokenStreamData =
