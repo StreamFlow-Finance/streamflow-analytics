@@ -1,8 +1,9 @@
 mod cache_logic;
 mod fetch_logic;
+use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{
-    error, get, post, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder,
+    error, get, http, post, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder,
 };
 use clokwerk::{AsyncScheduler, Job, TimeUnits};
 use redis::{AsyncCommands, Client, Commands, Connection, FromRedisValue, Value};
@@ -106,7 +107,10 @@ async fn main() -> std::io::Result<()> {
     };
     println!("Redis and RPC Clients connected!");
     HttpServer::new(move || {
+        let cors = Cors::permissive();
+
         App::new()
+            .wrap(cors)
             .app_data(clients.clone())
             .service(index)
             .service(schedule)

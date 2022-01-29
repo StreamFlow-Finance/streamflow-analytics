@@ -22,3 +22,4 @@ actix-web = { version = "4.0.0-beta.21" }
 redis = { version = "0.17.0", features = ["tokio-comp"] }
 job_scheduler = "1.2.1" 
 clokwerk = "0.4.0-rc1"
+actix-cors = { git="https://github.com/actix/actix-extras", rev="717b93e5079761020c76ffc36811400ecb7f3ffa"}
