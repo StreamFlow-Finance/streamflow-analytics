@@ -1,9 +1,11 @@
+mod cache_logic;
 mod fetch_logic;
 use actix_web::web::Data;
 use actix_web::{
     error, get, post, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder,
 };
-use redis::{AsyncCommands, Client, Commands, FromRedisValue, Value};
+use clokwerk::{AsyncScheduler, Job, TimeUnits};
+use redis::{AsyncCommands, Client, Commands, Connection, FromRedisValue, Value};
 use serde_json::json;
 use solana_client::rpc_client::RpcClient;
 use solana_program::pubkey::Pubkey;
@@ -15,11 +17,51 @@ use std::time::Duration;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio;
 use tokio::runtime::Runtime;
+// Import week days and WeekDay
+use clokwerk::Interval::*;
 
 #[derive(Clone)]
 struct AppClients {
     rpc_client: Arc<RpcClient>,
     redis_client: Client,
+}
+
+#[get("/schedule")]
+async fn schedule(req: HttpRequest) -> Result<HttpResponse, Error> {
+    match req.app_data::<AppClients>() {
+        Some(d) => {
+            let mut con = d.redis_client.get_async_connection().await.unwrap();
+            let r = d.clone();
+            let res: Value = con.get("schedule").await.unwrap();
+            let is_scheduled = match res {
+                Value::Nil => false,
+                _ => true,
+            };
+            if is_scheduled {
+                Ok(HttpResponse::Ok().json("job_already_scheduled"))
+            } else {
+                let _: () = con.set("schedule", "set").await.unwrap();
+                let mut scheduler = AsyncScheduler::new();
+                scheduler
+                    .every(10.minute())
+                    // .plus(30.seconds())
+                    .run(move || {
+                        let m = r.clone();
+                        async move {
+                            let mut con = m.redis_client.get_async_connection().await.unwrap();
+                            println!("Simplest is just using an async block");
+                            cache_logic::cache(m.rpc_client.clone(), con).await;
+                        }
+                    });
+
+                loop {
+                    scheduler.run_pending().await;
+                    tokio::time::sleep(Duration::from_millis(10)).await;
+                }
+            }
+        }
+        _ => Err(error::ErrorBadRequest("overflow")),
+    }
 }
 
 #[get("/query")]
@@ -42,28 +84,8 @@ async fn index(req: HttpRequest) -> Result<HttpResponse, Error> {
                 // println!("{:#?}", form);
                 Ok(HttpResponse::Ok().json(form))
             } else {
-                let counts = fetch_logic::fetch(d.rpc_client.clone()).await;
-                let (
-                    all_unique_tokens,
-                    all_streams,
-                    active_streams,
-                    total_value_sent,
-                    total_value_locked,
-                ) = counts;
-                let now = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap()
-                    .as_millis();
-                // hack
-                let string = format!("{}", now);
-                let val = serde_json::value::Value::from_str(&string).unwrap();
-                // -
-                let json_res = json!([{"target":"unique_tokens", "datapoints": [all_unique_tokens, val]},
-                {"target":"streams_created", "datapoints": [all_streams, val]},
-                {"target":"active_streams", "datapoints": [active_streams, val]},
-                {"target":"value_sent", "datapoints": [total_value_sent, val]},
-                {"target":"value_locked", "datapoints": [total_value_locked, val]}]);
-                let _: () = con.set("data", &json_res.to_string()).await.unwrap();
+                let json_res: serde_json::Value =
+                    cache_logic::cache(d.rpc_client.clone(), con).await;
                 Ok(HttpResponse::Ok().json(json_res))
             }
         }
@@ -83,9 +105,14 @@ async fn main() -> std::io::Result<()> {
         redis_client: redis_client.clone(),
     };
     println!("Redis and RPC Clients connected!");
-    HttpServer::new(move || App::new().app_data(clients.clone()).service(index))
-        .bind("127.0.0.1:8080")
-        .unwrap()
-        .run()
-        .await
+    HttpServer::new(move || {
+        App::new()
+            .app_data(clients.clone())
+            .service(index)
+            .service(schedule)
+    })
+    .bind("127.0.0.1:8080")
+    .unwrap()
+    .run()
+    .await
 }

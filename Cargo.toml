@@ -20,3 +20,5 @@ solana-sdk = "1.9.5"
 reqwest="0.11.9"
 actix-web = { version = "4.0.0-beta.21" }
 redis = { version = "0.17.0", features = ["tokio-comp"] }
+job_scheduler = "1.2.1" 
+clokwerk = "0.4.0-rc1"
