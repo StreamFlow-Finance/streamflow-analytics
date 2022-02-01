@@ -3,6 +3,7 @@ use actix_web::{get, web, App, HttpRequest, HttpServer, Responder};
 use borsh::{BorshDeserialize, BorshSerialize};
 use reqwest;
 use serde_json::Value as JsonValue;
+use serde::{Serialize, Deserialize};
 use solana_client::rpc_client::RpcClient;
 use solana_program::borsh as solana_borsh;
 use solana_program::pubkey::Pubkey;
@@ -117,7 +118,7 @@ pub struct TokenStreamData {
     pub ix: StreamInstruction,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct TokenInfo {
     name: String,
     symbol: String,
@@ -129,7 +130,17 @@ pub struct TokenInfo {
     value: f64,
 }
 
-pub async fn fetch(client: Arc<RpcClient>) -> (usize, usize, u64, f64, f64) {
+#[derive(Debug, Clone)]
+pub struct Response {
+    pub no_tokens: usize,
+    pub no_streams: usize,
+    pub no_active_streams: u64,
+    pub total_value_sent: f64,
+    pub total_value_locked: f64,
+    pub tokens : HashMap<String, TokenInfo>
+}
+
+pub async fn fetch(client: Arc<RpcClient>) -> Response {
     let s = client.clone();
     let child1 = thread::spawn(move || {
         let streamflow_addr =
@@ -269,11 +280,13 @@ pub async fn fetch(client: Arc<RpcClient>) -> (usize, usize, u64, f64, f64) {
     println!("total value sent {:#?}", total_value_sent);
     // number of different tokens being streamed (vested)
     println!("total value locked {:#?}", total_value_locked);
-    (
-        all_unique_tokens,
-        all_streams,
-        active_streams,
+
+    Response {
+        no_tokens: all_unique_tokens,
+        no_streams: all_streams,
+        no_active_streams: active_streams,
         total_value_sent,
         total_value_locked,
-    )
+        tokens: token_list
+    }
 }
