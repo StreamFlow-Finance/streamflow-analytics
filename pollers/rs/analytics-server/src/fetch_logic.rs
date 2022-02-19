@@ -212,13 +212,10 @@ pub async fn fetch(client: Arc<RpcClient>) -> Response {
                 let res_price = serde_json::from_str(&token_price);
                 new_token = res_metadata.unwrap();
                 let new_token_price: JsonValue = res_price.unwrap();
-                println!("https");
                 let tempmint = mint.clone();
                 let tempclient = client.clone();
                 let child = thread::spawn(move || tempclient.get_token_supply(&tempmint).unwrap());
                 let token_dec = child.join().unwrap();
-                println!("price {}", new_token_price);
-                println!("res {:#?}", token_dec);
                 let name = match &new_token["name"].as_str() {
                     Some(name) => name,
                     _ => "null",
@@ -231,24 +228,16 @@ pub async fn fetch(client: Arc<RpcClient>) -> Response {
                     Some(icon) => icon,
                     _ => "null",
                 };
-                // println!("{:#?}", teststr);
-                // println!("{:#?}", String::from(name));
-                // println!("{:#?}", symbol);
-                // println!("{:#?}", logo);
                 let price = match new_token_price["priceUsdt"].as_f64() {
                     Some(p) => p,
                     _ => 0.0,
                 };
                 let decimals = token_dec.decimals;
                 let amt = account_data_decoded.ix.deposited_amount;
-                println!("amount {}", amt);
                 let divisor = u64::pow(10, decimals as u32);
                 let adjusted_for_decimals = amt / divisor;
                 let value = adjusted_for_decimals as f64 * price;
-                println!(
-                    "divisor {}\nadjusted {}\noriginal {}\nfinal {}",
-                    divisor, adjusted_for_decimals, amt, value
-                );
+
                 if is_active {
                     total_value_locked += value;
                 }
@@ -268,7 +257,7 @@ pub async fn fetch(client: Arc<RpcClient>) -> Response {
         }
     }
     let all_unique_tokens = token_list.len();
-    println!("{:#?}", token_list);
+
 
     // number of different tokens being streamed (vested)
     println!("unique tokens {:#?}", all_unique_tokens);

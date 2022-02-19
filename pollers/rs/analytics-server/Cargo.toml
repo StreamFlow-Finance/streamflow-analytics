@@ -1,0 +1,22 @@
+[package]
+name = "analytics-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-client = "1.9.5"
+# tokio = { version = "1", features = ["full"] }
+tokio = {version = "1.9.0", features = ["full"]}
+solana-program = "1.4.17"
+serde = "1.0.127"
+serde_json = "1.0.66"
+borsh = "0.9.1"
+solana-sdk = "1.9.5"
+reqwest="0.11.9"
+actix-web = { version = "4.0.0-beta.21" }
+redis = { version = "0.17.0", features = ["tokio-comp"] }
+job_scheduler = "1.2.1"
+clokwerk = "0.4.0-rc1"
+actix-cors = { git="https://github.com/actix/actix-extras", rev="717b93e5079761020c76ffc36811400ecb7f3ffa"}
