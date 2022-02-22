@@ -17,6 +17,7 @@ use crate::domain::{TokenStreamData, ReadableStreamData};
 
 pub fn poll() {
     let rpc_pool_token = env::var("RPC_POOL_TOKEN").unwrap();
+    let network = env::var("NETWORK").unwrap()
     let solana_url = format!("https://streamflow.rpcpool.com/{}", rpc_pool_token.as_str()).to_string();
     loop {
         let now = SystemTime::now()
