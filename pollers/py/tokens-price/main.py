@@ -30,8 +30,13 @@ def poll_tokens_prices(freq):
                         continue
                     tickers = token_data.get('tickers')
                     for i in tickers:
-                        if i.get('target') == 'USD' or i.get('target') == 'USDC' or i.get('target') == 'USDT':
+                        if i.get('base') in ['USDC', 'USDT']:
+                            if i.get('target') == 'USD':
+                                uq_mints[mint] = i.get('last')
+                                continue
+                        if i.get('target') in ['USD', 'USDC', 'USDT']:
                             uq_mints[mint] = i.get('last')
+                            continue
                     time.sleep(1)
         r.set('token-prices', json.dumps(uq_mints))
         print(f'iteration done at {time.time()}')
