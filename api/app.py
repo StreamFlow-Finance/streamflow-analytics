@@ -1,13 +1,13 @@
-from flask import Flask
+from flask import Flask, request
 import redis
 import json
 import os
 from datetime import timezone
 import datetime
 import requests
-
-
+from process import process
 application = Flask(__name__)
+application.config['JSON_SORT_KEYS'] = False
 
 
 @application.route("/tokens")
@@ -40,15 +40,19 @@ def get_tokens_data():
 @application.route("/contracts/community")
 def contracts_community():
     r = redis.Redis(host='localhost', port=6379)
-    value = json.loads(r.get('contracts-community'))
-    return value
+    resp = json.loads(r.get('contracts-community'))
+    c = process(resp.get('data'), request.args)
+    resp['data'] = c
+    return resp
 
 
 @application.route("/contracts/streamflow")
 def contracts_streamflow():
     r = redis.Redis(host='localhost', port=6379)
-    value = json.loads(r.get('contracts-streamflow'))
-    return value
+    resp = json.loads(r.get('contracts-streamflow'))
+    c = process(resp.get('data'), request.args)
+    resp['data'] = c
+    return resp
 
 
 @application.route("/contracts/community/<address>")

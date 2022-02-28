@@ -2,7 +2,6 @@ import time
 
 from pycoingecko import CoinGeckoAPI
 import json
-import requests
 import redis
 
 import os
@@ -17,7 +16,7 @@ def poll_tokens_prices(freq):
     while True:
         r = redis.Redis(host='localhost', port=6379)
         uq_mints = {}
-        for dataset in ['contracts-community', 'contracts-streamflow']:
+        for dataset in ['contracts-streamflow', 'contracts-community']:
             data = json.loads(r.get(dataset))
             for stream, contract in data.get('data').items():
                 mint = contract.get('mint')
@@ -29,11 +28,10 @@ def poll_tokens_prices(freq):
                         time.sleep(1)
                         continue
                     tickers = token_data.get('tickers')
+                    if token_data.get('symbol') in ['usdc', 'usdt']:
+                        uq_mints[mint] = 1
+                        continue
                     for i in tickers:
-                        if i.get('base') in ['USDC', 'USDT']:
-                            if i.get('target') == 'USD':
-                                uq_mints[mint] = i.get('last')
-                                continue
                         if i.get('target') in ['USD', 'USDC', 'USDT']:
                             uq_mints[mint] = i.get('last')
                             continue
