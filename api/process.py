@@ -1,4 +1,4 @@
-def process(data, args):
+def filter(data, args):
     c = CollectionProcessor(data)
     filter_field = args.get('filter_field')
     filter_operand = args.get('filter_op')
