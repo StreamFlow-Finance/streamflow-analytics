@@ -1,21 +1,33 @@
 import json
 import redis
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 
 from process import filter
-from operations.tokens import get_tokens_data, get_tokens_metadata
+from operations.tokens import RedisState
 
 tokens_handler = Blueprint('tokens', __name__)
 
 
 @tokens_handler.route("/")
 def all_tokens():
-    return get_tokens_data()
+    return RedisState().get_tokens_data()
+
+
+@tokens_handler.route("/", methods=['POST'])
+def add_token():
+    token = request.headers.get('Auth-Token')
+    if current_app.config.get('AUTH_TOKEN') != token or token is None:
+        return {"Message": "Forbidden."}, 403
+    body = request.json
+    mint = body.get('mint')
+    price = body.get('price')
+    RedisState().add_token(mint, price)
+    return {"Message": "OK"}
 
 
 @tokens_handler.route("/<address>")
 def token_by_address(address):
-    data = get_tokens_data()
+    data = RedisState().get_tokens_data()
     for mint, mint_data in data.items():
         if mint == address:
             return mint_data
@@ -28,7 +40,7 @@ def tokens_streamflow_summary():
     value = json.loads(r.get('contracts-streamflow'))
     c = filter(value.get('data'), request.args)
     value['data'] = c
-    tokens = get_tokens_metadata()
+    tokens = RedisState().get_tokens_metadata()
 
     # filter out no active streams
     token_stats = {}
@@ -58,7 +70,7 @@ def tokens_community_summary():
     value = json.loads(r.get('contracts-community'))
     c = filter(value.get('data'), request.args)
     value['data'] = c
-    tokens = get_tokens_metadata()
+    tokens = RedisState().get_tokens_metadata()
 
     # filter out no active streams
     token_stats = {}

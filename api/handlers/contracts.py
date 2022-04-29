@@ -6,7 +6,7 @@ import datetime
 
 from process import filter
 from repr import repr_contract_streamflow, repr_contract_community
-from operations.tokens import get_tokens_metadata, get_tokens_data
+from operations.tokens import RedisState
 
 contracts_handler = Blueprint('contracts', __name__)
 
@@ -22,7 +22,7 @@ def get_contracts(query_set, representation):
     contracts = json.loads(r.get(query_set)).get('data')
     contracts = filter(contracts, request.args)
 
-    tokens = get_tokens_metadata()
+    tokens = RedisState().get_tokens_metadata()
     for id, contract in contracts.items():
         token = tokens.get(contract.get('mint'))
         contracts[id] = representation(contract, token)
@@ -67,7 +67,7 @@ def contracts_community_summary():
 
     r = redis.Redis(host='localhost', port=6379)
     value = json.loads(r.get('contracts-community')).get('data')
-    tokens = get_tokens_data()
+    tokens = RedisState().get_tokens_data()
     total_streams_created = len(value.keys())
 
     # filter out no active streams
@@ -108,7 +108,7 @@ def contracts_streamflow_summary():
 
     r = redis.Redis(host='localhost', port=6379)
     value = json.loads(r.get('contracts-streamflow')).get('data')
-    tokens = get_tokens_data()
+    tokens = RedisState().get_tokens_data()
     total_streams_created = len(value.keys())
 
     # filter out no active streams

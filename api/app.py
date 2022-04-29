@@ -5,6 +5,7 @@ from handlers.contracts import contracts_handler
 
 application = Flask(__name__)
 application.config['JSON_SORT_KEYS'] = False
+application.config['AUTH_TOKEN'] = os.environ.get('AUTH_TOKEN')
 
 application.register_blueprint(contracts_handler, url_prefix='/contracts')
 application.register_blueprint(tokens_handler, url_prefix='/tokens')
