@@ -18,7 +18,7 @@ class RedisState:
         self.state = redis.Redis(host='localhost', port=6379)
 
     def get_contracts(self, program):
-        json.loads(self.state.get(program_keys.get(program))).get('data')
+        return json.loads(self.state.get(program_keys.get(program))).get('data')
 
     def get_token_prices(self):
         prices = json.loads(self.state.get(custom_token_prices))
