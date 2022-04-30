@@ -3,7 +3,7 @@ import redis
 from flask import Blueprint, request, current_app
 
 from process import filter
-from operations.tokens import RedisState
+from operations.state import RedisState
 
 tokens_handler = Blueprint('tokens', __name__)
 
