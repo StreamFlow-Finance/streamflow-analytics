@@ -14,7 +14,7 @@ def repr_contract_streamflow(contract, token):
     ix['net_amount_deposited'] = int(ix.get('net_amount_deposited')) / 10**int(decimals)
     ix['amount_per_period'] = int(ix.get('amount_per_period')) / 10**int(decimals)
     ix['cliff_amount'] = int(ix.get('cliff_amount')) / 10**int(decimals)
-    contract['total_value_usd'] = int(ix['net_amount_deposited']) * int(price)
+    contract['total_value_usd'] = int(ix['net_amount_deposited']) * float(price)
     return contract
 
 
