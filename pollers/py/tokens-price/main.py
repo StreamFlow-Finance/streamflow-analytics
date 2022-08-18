@@ -22,11 +22,11 @@ def poll_tokens_prices(freq):
                 mint = contract.get('mint')
                 if uq_mints.get(mint) is None:
                     try:
+                        time.sleep(3)
                         token_data = cg.get_coin_info_from_contract_address_by_id('solana', mint)
-                        print(f"fetching price for {mint}")
+                        print(f"fetched price for {mint}")
                     except ValueError as e:
-                        print(f"Error: {e}")
-                        time.sleep(1)
+                        print(f"Error fetching price for mint: {mint} : {e}")
                         continue
                     tickers = token_data.get('tickers')
                     if token_data.get('symbol') in ['usdc', 'usdt']:
@@ -36,7 +36,6 @@ def poll_tokens_prices(freq):
                         if i.get('target') in ['USD', 'USDC', 'USDT', 'EPJFWDD5AUFQSSQEM2QN1XZYBAPC8G4WEGGKZWYTDT1V']:
                             uq_mints[mint] = i.get('last')
                             break
-                    time.sleep(1)
         r.set('token-prices', json.dumps(uq_mints))
         print(f'iteration done at {time.time()}')
         time.sleep(freq)
