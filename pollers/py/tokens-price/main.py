@@ -27,15 +27,20 @@ def poll_tokens_prices(freq):
                         print(f"fetched price for {mint}")
                     except ValueError as e:
                         print(f"Error fetching price for mint: {mint} : {e}")
+                        uq_mints[mint] = 0
                         continue
                     tickers = token_data.get('tickers')
                     if token_data.get('symbol') in ['usdc', 'usdt']:
                         uq_mints[mint] = 1
                         continue
+                    found = False
                     for i in tickers:
                         if i.get('target') in ['USD', 'USDC', 'USDT', 'EPJFWDD5AUFQSSQEM2QN1XZYBAPC8G4WEGGKZWYTDT1V']:
                             uq_mints[mint] = i.get('last')
+                            found = True
                             break
+                    if not found:
+                        uq_mints[mint] = 0
         r.set('token-prices', json.dumps(uq_mints))
         print(f'iteration done at {time.time()}')
         time.sleep(freq)
