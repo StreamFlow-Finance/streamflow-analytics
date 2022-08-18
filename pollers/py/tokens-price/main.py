@@ -23,8 +23,9 @@ def poll_tokens_prices(freq):
                 if uq_mints.get(mint) is None:
                     try:
                         token_data = cg.get_coin_info_from_contract_address_by_id('solana', mint)
-                        print("fetching from cg")
+                        print(f"fetching price for {mint}")
                     except ValueError as e:
+                        print(f"Error: {e}")
                         time.sleep(1)
                         continue
                     tickers = token_data.get('tickers')
