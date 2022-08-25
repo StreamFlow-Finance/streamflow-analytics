@@ -35,6 +35,12 @@ pub struct StreamInstruction {
     pub stream_name: [u8; 64],
     /// Withdraw frequency
     pub withdraw_frequency: u64,
+    /// used as padding len in serialization in old streams, added for backwards compatibility
+    pub ghost: u32,
+    /// Whether or not the contract can be paused
+    pub pausable: bool,
+    /// Whether or not the contract can update release amount
+    pub can_update_rate: bool,
 }
 
 
@@ -96,6 +102,15 @@ pub struct TokenStreamData {
     pub ix_padding: Vec<u8>,
     // Stream is closed
     pub closed: bool,
+    /// time of the current pause. 0 signifies unpaused state
+    pub current_pause_start: u64,
+    /// total time the contract was paused for
+    pub pause_cumulative: u64,
+    /// timestamp of last rate change for this stream.
+    /// Rate can be changed with `update` instruction
+    pub last_rate_change_time: u64,
+    /// Accumulated unlocked tokens before last rate change (excluding cliff_amount)
+    pub funds_unlocked_at_last_rate_change: u64,
 }
 
 /// The struct containing instructions for initializing a stream
@@ -128,6 +143,10 @@ pub struct ReadableStreamInstruction {
     pub can_topup: bool,
     /// Withdraw frequency
     pub withdraw_frequency: u64,
+    /// Whether or not the contract can be paused
+    pub pausable: bool,
+    /// Whether or not the contract can update release amount
+    pub can_update_rate: bool,
 }
 
 impl ReadableStreamInstruction{
@@ -146,7 +165,9 @@ impl ReadableStreamInstruction{
             transferable_by_sender: data.transferable_by_sender,
             transferable_by_recipient: data.transferable_by_recipient,
             can_topup: data.can_topup,
-            withdraw_frequency: data.withdraw_frequency
+            withdraw_frequency: data.withdraw_frequency,
+            pausable: data.pausable,
+            can_update_rate: data.can_update_rate
         }
     }
 }
