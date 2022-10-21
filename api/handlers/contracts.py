@@ -180,3 +180,54 @@ def contracts_all_summary():
     }
     return json.dumps(resp)
 
+
+@contracts_handler.route("/summary/<token_mint>")
+def contracts_all_summary_by_mint(token_mint):
+    dt = datetime.datetime.now(timezone.utc)
+
+    utc_time = dt.replace(tzinfo=timezone.utc)
+    now = int(utc_time.timestamp())
+
+    state = RedisState()
+    community = state.get_contracts('community')
+    streamflow = state.get_contracts('streamflow')
+    tokens = state.get_tokens_data()
+
+    # filter out no active streams
+    total_created = 0
+    total_active_streams = 0
+    total_value_sent = 0
+    total_value_locked = 0
+
+    for address, contract in streamflow.items():
+        mint = contract.get('mint')
+        token = tokens.get(mint)
+        if token is None or mint != token_mint:
+            continue
+        total_created += 1
+        if contract.get('end_time') > now:
+            total_active_streams += 1
+            locked_value = (contract.get('ix').get('net_amount_deposited') - contract.get('amount_withdrawn')) / 10**int(token.get('decimals')) * float(token.get('price_usd'))
+            total_value_locked += locked_value
+        total_value_sent += contract.get('ix').get('net_amount_deposited') / 10**token.get('decimals') * token.get('price_usd')
+
+    for address, contract in community.items():
+        mint = contract.get('mint')
+        token = tokens.get(mint)
+        if token is None or mint != token_mint:
+            continue
+        total_created += 1
+        if contract.get('ix').get('end_time') > now:
+            total_active_streams += 1
+            locked_value = (contract.get('ix').get('deposited_amount') - contract.get('withdrawn_amount')) / 10**int(token.get('decimals')) * float(token.get('price_usd'))
+            total_value_locked += locked_value
+        total_value_sent += contract.get('ix').get('deposited_amount') / 10**token.get('decimals') * token.get('price_usd')
+
+    resp = {
+        "total_streams_created": total_created,
+        "active_streams": total_active_streams,
+        "total_value_locked": int(total_value_locked),
+        "total_value_sent": int(total_value_sent)
+    }
+    return json.dumps(resp)
+

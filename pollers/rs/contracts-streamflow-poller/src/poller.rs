@@ -32,7 +32,20 @@ pub fn poll() {
         for contract in res {
             let account_data_decoded: TokenStreamData =
                 solana_borsh::try_from_slice_unchecked(&contract.1.data).unwrap();
-            serialized_contracts.insert(contract.0.to_string(), ReadableStreamData::new(account_data_decoded));
+            let mut data = ReadableStreamData::new(account_data_decoded.clone());
+
+            let resp = rpc_client.get_account(&account_data_decoded.sender.clone());
+            match resp {
+                Ok(e) => {
+                    if e.owner == Pubkey::from_str("SMPLecH534NA9acpos4G6x7uf3LWbCAwZQE9e8ZekMu").unwrap() {
+                        data.multisig = 1
+                    }
+                }
+                Err(_e) => {}
+            }
+            // if the sender is owned by squads program, add label 1
+
+            serialized_contracts.insert(contract.0.to_string(), data);
         };
 
         let mut conn = redis_client.get_connection().unwrap();

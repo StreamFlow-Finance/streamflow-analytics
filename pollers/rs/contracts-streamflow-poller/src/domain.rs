@@ -228,6 +228,7 @@ pub struct ReadableStreamData {
     pub ix: ReadableStreamInstruction,
     // Stream is closed
     pub closed: bool,
+    pub multisig: u64,
 }
 
 impl ReadableStreamData {
@@ -258,7 +259,8 @@ impl ReadableStreamData {
             partner_fee_withdrawn: data.partner_fee_withdrawn,
             partner_fee_percent: data.partner_fee_percent,
             ix: ReadableStreamInstruction::new(data.ix),
-            closed: data.closed
+            closed: data.closed,
+            multisig: 0
         }
     }
 
